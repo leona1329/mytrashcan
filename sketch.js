@@ -1,219 +1,80 @@
-// ====== Migraine Aura Simulation (8-Stage Final Version: Subtle Green Closed Eye) ======
+const scenes = [
+  {num:'壹',name:'西湖初遇',eye:'序 · 南宋绍兴年间',title:'烟雨断桥<br><strong>一伞相逢</strong>',text:'清明时节，西湖烟雨。白素贞与小青游至断桥，恰逢书生许仙。一柄青伞，遮住了雨，也撑开一段千年情缘。',action:'递出油纸伞'},
+  {num:'贰',name:'同舟归家',eye:'第一折 · 雨歇钱塘',title:'渡船轻摇<br><strong>心意初明</strong>',text:'船行碧波，雨声渐远。许仙送伞至白府，几句温言，一盏清茶。两颗心在檐下悄然靠近，结作人间夫妻。',action:'叩响白府门'},
+  {num:'叁',name:'端午惊变',eye:'第二折 · 雄黄入酒',title:'一盏雄黄<br><strong>惊破好梦</strong>',text:'端午日，许仙劝饮雄黄。白素贞难抵药力，现出蛇身。许仙惊绝倒地，她却不顾安危，远赴昆仑求取仙草。',action:'前往昆仑山'},
+  {num:'肆',name:'水漫金山',eye:'第三折 · 金山寺外',title:'潮生江海<br><strong>只为一人</strong>',text:'法海将许仙困于金山。白素贞苦求不得，情急引来滔天江水。风雷之中，她要的不过是与所爱之人重逢。',action:'唤起钱塘潮'},
+  {num:'伍',name:'雷峰永誓',eye:'终折 · 雷峰塔下',title:'塔影千年<br><strong>此情不灭</strong>',text:'雷峰塔锁得住身，却锁不住相思。多年之后塔倾人聚，断桥仍在，伞下的誓言终于穿过漫长岁月。',action:'回望初见时'}
+];
 
-let bgImg;
-let flashes = [];
-let blurSpots = [];
-let vignetteStrength = 0;
-let stage = 1;
-let blindness = 0;
+let current = 0;
+const $ = (s) => document.querySelector(s);
+const stage = $('.stage');
+const title = $('#title');
+const storyText = $('#storyText');
+const eyebrow = $('#eyebrow');
+const actionLabel = $('#storyAction span');
+const buttons = [...document.querySelectorAll('[data-scene]')];
 
-function preload() {
-  bgImg = loadImage("1.jpg"); // ← 换成你的背景图
+function showScene(index) {
+  current = (index + scenes.length) % scenes.length;
+  const scene = scenes[current];
+  document.body.className = `scene-${current + 1}`;
+  $('#chapterNumber').textContent = scene.num;
+  $('#chapterName').textContent = scene.name;
+  eyebrow.textContent = scene.eye;
+  title.innerHTML = scene.title;
+  storyText.textContent = scene.text;
+  actionLabel.textContent = scene.action;
+  buttons.forEach((button, i) => button.classList.toggle('active', i === current));
+  $('#progressBar').style.width = `${(current + 1) * 20}%`;
+  stage.classList.remove('transitioning');
+  void stage.offsetWidth;
+  stage.classList.add('transitioning');
 }
 
-function setup() {
-  createCanvas(600, 800);
-  imageMode(CENTER);
-  noCursor();
+buttons.forEach(button => button.addEventListener('click', () => showScene(Number(button.dataset.scene))));
+$('#prevBtn').addEventListener('click', () => showScene(current - 1));
+$('#nextBtn').addEventListener('click', () => showScene(current + 1));
+$('#storyAction').addEventListener('click', () => showScene(current === scenes.length - 1 ? 0 : current + 1));
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowRight') showScene(current + 1);
+  if (event.key === 'ArrowLeft') showScene(current - 1);
+});
 
-  for (let i = 0; i < 10; i++) flashes.push(new Flash());
-}
+stage.addEventListener('pointermove', (event) => {
+  const x = (event.clientX / innerWidth - .5) * 2;
+  const y = (event.clientY / innerHeight - .5) * 2;
+  $('.lady').style.translate = `${x * 8}px ${y * 3}px`;
+  $('.scholar').style.translate = `${x * -7}px ${y * -2}px`;
+  $('#umbrella').style.marginLeft = `${x * 5}px`;
+});
 
-function draw() {
-  background(0);
-
-  // === Stage 7 (闭眼微绿透光) ===
-  if (stage === 7) {
-    drawClosedEyeGreen();
-    drawStageText("Stage 7 / 8 - 闭眼微绿透光");
+// A tiny synthesized rain bed keeps the page self-contained and starts only after consent.
+let audioContext;
+let rainSource;
+$('#soundBtn').addEventListener('click', () => {
+  const button = $('#soundBtn');
+  if (audioContext) {
+    rainSource.stop();
+    audioContext.close();
+    audioContext = null;
+    button.classList.remove('playing');
+    button.setAttribute('aria-pressed', 'false');
+    button.querySelector('b').textContent = '听雨';
     return;
   }
-
-  // === Stage 8 (睁眼回到 Stage 6 状态) ===
-  if (stage === 8) {
-    stage = 6; // 直接切换为 6 的视觉状态
-  }
-
-  // === 1–6 原有 Aura 阶段 ===
-  image(bgImg, width / 2, height / 2, width, height);
-
-  // 闪光锯齿线
-  push();
-  blendMode(ADD);
-  let maxFlashes = int(map(stage, 1, 6, 10, 90));
-  while (flashes.length < maxFlashes) flashes.push(new Flash());
-  while (flashes.length > maxFlashes) flashes.pop();
-
-  for (let f of flashes) {
-    f.update();
-    f.display();
-  }
-  pop();
-
-  // 马赛克模糊盲点
-  if (frameCount % int(150 / stage) === 0 && blurSpots.length < stage * 5) {
-    blurSpots.push(new MosaicBlurSpot(stage));
-  }
-
-  for (let s of blurSpots) {
-    s.update();
-    s.display();
-  }
-  blurSpots = blurSpots.filter(s => !s.finished);
-
-  // 磨砂视野收缩
-  vignetteStrength = min(vignetteStrength + 0.002, 1);
-  drawFrostedVignette(vignetteStrength, blindness);
-
-  drawStageText(`Stage ${stage} / 8 - 按空格切换`);
-}
-
-// === 小锯齿闪光条 ===
-class Flash {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = random(width);
-    this.y = random(height);
-    this.length = random(10, 30);
-    this.segments = int(random(4, 8));
-    this.amp = random(1.5, 3);
-    this.angle = random(TWO_PI);
-    this.life = random(80, 160);
-    this.alpha = random(120, 230);
-    this.phase = random(TWO_PI);
-    this.speed = random(0.05, 0.09);
-  }
-  update() {
-    this.phase += this.speed;
-    this.life -= 1.2;
-    if (this.life < 0) this.reset();
-  }
-  display() {
-    push();
-    translate(this.x, this.y);
-    rotate(this.angle);
-    let flicker = map(sin(this.phase * 2.5), -1, 1, 0.4, 1);
-    stroke(255, 255, 255, this.alpha * flicker);
-    strokeWeight(1);
-    noFill();
-    beginShape();
-    let dir = 1;
-    for (let i = 0; i <= this.segments; i++) {
-      let x = (this.length / this.segments) * i;
-      let y = dir * this.amp;
-      vertex(x, y);
-      dir *= -1;
-    }
-    endShape();
-    pop();
-  }
-}
-
-// === 马赛克模糊盲点 ===
-class MosaicBlurSpot {
-  constructor(stage) {
-    this.x = random(width);
-    this.y = random(height);
-    this.size = random(60 * stage, 150 * stage);
-    this.alpha = 0;
-    this.phase = "fadein";
-    this.timer = 0;
-    this.lifetime = 180;
-    this.maxAlpha = map(stage, 1, 6, 120, 230);
-    this.cell = int(random(6, 14));
-  }
-
-  update() {
-    this.timer++;
-    if (this.phase === "fadein") {
-      this.alpha += 4;
-      if (this.alpha >= this.maxAlpha) {
-        this.alpha = this.maxAlpha;
-        this.phase = "hold";
-        this.timer = 0;
-      }
-    } else if (this.phase === "hold") {
-      if (this.timer > this.lifetime) {
-        this.phase = "fadeout";
-        this.timer = 0;
-      }
-    } else if (this.phase === "fadeout") {
-      this.alpha -= 3;
-      if (this.alpha <= 0) this.finished = true;
-    }
-  }
-
-  display() {
-    push();
-    translate(this.x, this.y);
-    let r = this.size / 2;
-    noStroke();
-    for (let i = -r; i < r; i += this.cell) {
-      for (let j = -r; j < r; j += this.cell) {
-        let d = dist(0, 0, i, j);
-        if (d < r) {
-          fill(255, this.alpha * random(0.2, 0.6));
-          rect(i, j, this.cell, this.cell);
-        }
-      }
-    }
-    pop();
-  }
-}
-
-// === 磨砂白色视野收缩 ===
-function drawFrostedVignette(str, blind) {
-  push();
-  blendMode(OVERLAY);
-  noStroke();
-  let radius = max(width, height);
-  let num = int(100 * (str + blind));
-  for (let i = 0; i < num; i++) {
-    let ang = random(TWO_PI);
-    let r = random(radius * 0.4, radius * 0.7);
-    let x = width / 2 + cos(ang) * r;
-    let y = height / 2 + sin(ang) * r;
-    fill(255, random(60, 120));
-    ellipse(x, y, random(3, 10));
-  }
-  pop();
-}
-
-// === 闭眼微绿透光（静态） ===
-function drawClosedEyeGreen() {
-  background(0);
-  noStroke();
-  for (let i = 0; i < 250; i++) {
-    fill(50, 120, 80, random(10, 30)); // 微绿透光粒子
-    ellipse(random(width), random(height), random(2, 8));
-  }
-  // 中心轻微亮感
-  fill(60, 150, 100, 40);
-  ellipse(width / 2, height / 2, width * 0.6, height * 0.6);
-}
-
-// === 阶段文字 ===
-function drawStageText(txt) {
-  fill(255, 160);
-  noStroke();
-  textAlign(CENTER);
-  textSize(16);
-  text(txt, width / 2, height - 20);
-}
-
-// === 空格切换阶段 (1~8) ===
-function keyPressed() {
-  if (key === ' ') {
-    stage++;
-    if (stage > 8) stage = 1;
-
-    if (stage === 1) blindness = 0.05;
-    if (stage === 2) blindness = 0.15;
-    if (stage === 3) blindness = 0.3;
-    if (stage === 4) blindness = 0.5;
-    if (stage === 5) blindness = 0.7;
-    if (stage === 6) blindness = 0.9;
-    if (stage === 7) blindness = 0; // 闭眼独立处理
-    if (stage === 8) blindness = 0.9; // 恢复同 stage6
-  }
-}
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 2, audioContext.sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let i = 0; i < channel.length; i++) channel[i] = (Math.random() * 2 - 1) * .22;
+  rainSource = audioContext.createBufferSource();
+  const filter = audioContext.createBiquadFilter();
+  const gain = audioContext.createGain();
+  filter.type = 'lowpass'; filter.frequency.value = 1800; gain.gain.value = .09;
+  rainSource.buffer = buffer; rainSource.loop = true;
+  rainSource.connect(filter).connect(gain).connect(audioContext.destination);
+  rainSource.start();
+  button.classList.add('playing');
+  button.setAttribute('aria-pressed', 'true');
+  button.querySelector('b').textContent = '止雨';
+});

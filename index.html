@@ -1,17 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/p5.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/addons/p5.sound.min.js"></script>
-    <script src="https://unpkg.com/p5-webserial@0.1.1/build/p5.webserial.js"></script>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111910">
+  <title>一伞·千年｜白蛇传</title>
+  <meta name="description" content="一段以皮影戏讲述的白娘子与许仙互动故事。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="回到故事开端">
+      <span class="brand-mark">白</span>
+      <span><b>一伞·千年</b><small>白蛇传 · 皮影叙事</small></span>
+    </a>
+    <div class="chapter-tag"><span>卷</span><b id="chapterNumber">壹</b><i></i><em id="chapterName">西湖初遇</em></div>
+    <button class="sound-btn" id="soundBtn" aria-label="开启环境音" aria-pressed="false">
+      <span class="sound-bars"><i></i><i></i><i></i></span><b>听雨</b>
+    </button>
+  </header>
 
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <meta charset="utf-8" />
+  <main id="story">
+    <section class="stage" aria-live="polite">
+      <div class="moon" aria-hidden="true"></div>
+      <div class="mountains mountains-back" aria-hidden="true"></div>
+      <div class="mountains mountains-front" aria-hidden="true"></div>
+      <div class="rain" id="rain" aria-hidden="true"></div>
+      <div class="willow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="bridge" aria-hidden="true"><span></span></div>
+      <div class="water" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
-  </head>
-  <body>
-    <main>
-    </main>
-    <script src="sketch.js"></script>
-  </body>
+      <div class="story-copy">
+        <p class="eyebrow" id="eyebrow">序 · 南宋绍兴年间</p>
+        <h1 id="title">烟雨断桥<br><strong>一伞相逢</strong></h1>
+        <p class="story-text" id="storyText">清明时节，西湖烟雨。白素贞与小青游至断桥，恰逢书生许仙。一柄青伞，遮住了雨，也撑开一段千年情缘。</p>
+        <button class="story-action" id="storyAction"><span>递出油纸伞</span><i>→</i></button>
+      </div>
+
+      <div class="puppet-stage" id="puppetStage" aria-label="白娘子与许仙的皮影戏场景">
+        <div class="halo" aria-hidden="true"></div>
+        <figure class="puppet lady" aria-label="白娘子皮影">
+          <svg viewBox="0 0 260 560" role="img">
+            <g class="puppet-body">
+              <path class="silhouette" d="M135 64c-10-21-1-39 18-52-3 20 2 28 19 34-15 2-22 9-24 23 25 4 38 18 39 42 0 16-7 29-20 39l4 39c35 27 50 65 48 113l-7 123 28 75-40 17-47-81-4-86-8 93-24 92-42-11 17-95-4-106c-23 19-38 46-45 81l-17-8c6-59 28-104 64-135l10-68c-20-12-28-30-23-54 4-19 14-32 28-39z"/>
+              <path class="cutout" d="M121 101c13-13 30-14 45-2-8 2-12 8-13 17-12-2-23-7-32-15zm7 75c18 7 33 7 44-1l5 24c-16 10-35 9-53-2zM104 246c30 17 58 18 84 2l5 34c-29 20-61 19-95-1zm3 61c31 17 60 18 87 1l1 25c-29 18-59 17-91-2z"/>
+              <path class="pattern" d="M116 225c18 4 32 4 44 0m-51 104c28 23 58 23 88 0M90 370c38 18 76 19 115 2M74 407c48 17 97 18 145 2"/>
+              <circle class="joint" cx="72" cy="270" r="8"/><circle class="joint" cx="205" cy="285" r="8"/>
+            </g>
+          </svg>
+          <figcaption><b>白素贞</b><small>峨眉修行千年</small></figcaption>
+        </figure>
+
+        <div class="umbrella" id="umbrella" aria-label="油纸伞">
+          <svg viewBox="0 0 420 250"><path d="M20 111Q210-72 400 111Q350 92 305 121Q257 91 210 121Q162 91 115 121Q68 92 20 111Z"/><path d="M210 113v115q0 20-18 20-13 0-13-13"/><path class="rib" d="M22 110h376M210 8v106M210 8q-68 32-95 103M210 8q68 32 95 103"/></svg>
+        </div>
+
+        <figure class="puppet scholar" aria-label="许仙皮影">
+          <svg viewBox="0 0 260 560" role="img">
+            <g class="puppet-body">
+              <path class="silhouette" d="M100 68c3-23 17-38 43-44 18-4 39 1 52 14l-18 13c12 12 17 27 13 46-3 17-12 31-29 40l4 53c28 19 46 51 53 94l15 103-20 5-29-99 2 135 25 79-41 14-42-77-3-82-8 76-21 86-43-12 17-93-2-126c-15 32-22 68-21 108l-20-2c-2-58 10-106 37-144l17-60-9-25c-6-17-3-31 9-43 10-10 23-15 39-15z"/>
+              <path class="cutout" d="M110 80c19-10 38-9 57 2-5 8-8 16-7 24-19 0-36-8-50-26zm-18 106c24 10 48 10 72 0l3 26c-24 12-50 12-77 0zm-15 57c35 17 69 17 103 0l5 30c-37 19-74 18-112-2zm-7 70c42 20 82 20 120 0l1 26c-39 20-80 19-122-1z"/>
+              <path class="pattern" d="M84 292c33 18 67 18 102 0M71 365c39 18 79 18 119 1M64 401c43 17 85 17 127 0"/>
+              <circle class="joint" cx="57" cy="268" r="8"/><circle class="joint" cx="202" cy="276" r="8"/>
+            </g>
+          </svg>
+          <figcaption><b>许 仙</b><small>临安书生</small></figcaption>
+        </figure>
+      </div>
+
+      <div class="hint"><span>移动鼠标</span><i></i><span>牵动皮影</span></div>
+    </section>
+
+    <nav class="chapter-nav" aria-label="故事章节">
+      <button class="nav-arrow prev" id="prevBtn" aria-label="上一章">←</button>
+      <ol id="chapterList">
+        <li><button class="active" data-scene="0"><em>01</em><span>西湖初遇</span></button></li>
+        <li><button data-scene="1"><em>02</em><span>同舟归家</span></button></li>
+        <li><button data-scene="2"><em>03</em><span>端午惊变</span></button></li>
+        <li><button data-scene="3"><em>04</em><span>水漫金山</span></button></li>
+        <li><button data-scene="4"><em>05</em><span>雷峰永誓</span></button></li>
+      </ol>
+      <button class="nav-arrow next" id="nextBtn" aria-label="下一章">→</button>
+      <div class="progress"><i id="progressBar"></i></div>
+    </nav>
+  </main>
+
+  <footer><span>非遗皮影 · 数字新生</span><p>点击章节，重走一遍千年传说</p><span>甲辰年制</span></footer>
+  <script src="sketch.js"></script>
+</body>
 </html>
